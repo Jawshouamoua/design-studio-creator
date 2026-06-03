@@ -9,7 +9,7 @@ Actor.on('aborting', async () => {
     await Actor.exit();
 });
 
-const port = Number(process.env.ACTOR_WEB_SERVER_PORT) || 3000;
+const port = Number(process.env.ACTOR_WEB_SERVER_PORT) || Number(process.env.PORT) || 3000;
 const app = createApp();
 
 app.listen(port, () => {
