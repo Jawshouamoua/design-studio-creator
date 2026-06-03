@@ -1,7 +1,7 @@
 import express, { type Request, type Response } from 'express';
 import { fileURLToPath } from 'node:url';
 import { log } from 'apify';
-import { scrapeImages } from './bing-image-scraper.js';
+import { searchImages } from './image-search.js';
 import { interpretTopic } from './llm.js';
 
 export function createApp(): express.Application {
@@ -42,7 +42,7 @@ export function createApp(): express.Application {
         console.log('[search]', { original: q, searchQuery });
 
         try {
-            const images = await scrapeImages(searchQuery, maxResults);
+            const images = await searchImages(searchQuery, maxResults);
             res.json({ images });
         } catch (err) {
             const message = (err as Error).message ?? String(err);
