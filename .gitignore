@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.venv/
+
+# Build output
+dist/
+tsconfig.tsbuildinfo
+
+# Local storage (dev only, not synced to Apify Cloud)
+storage/
+apify_storage/
+crawlee_storage/
+
+# Environment variables
+.env
+.env.local
+
+# Editor directories
+.idea/
+.vscode/
+.zed/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*

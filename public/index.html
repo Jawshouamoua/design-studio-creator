@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Design Studio Image Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #2b2b2b;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #2b2b2b;
+      color: #fff;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 1rem; letter-spacing: 0.04em; }
+
+    #search-form {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    #search-input {
+      padding: 0.6rem 1rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      width: 320px;
+      max-width: 100%;
+    }
+
+    #max-results {
+      padding: 0.6rem 0.75rem;
+      font-family: inherit;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      width: 80px;
+    }
+
+    #search-btn {
+      padding: 0.6rem 1.4rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 500;
+      background: #b0915d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+    }
+
+    #search-btn:hover { background: #9a7d50; }
+    #search-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    main { padding: 2rem 1rem; max-width: 1200px; margin: 0 auto; }
+
+    #status {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      min-height: 2rem;
+      color: #2b2b2b;
+      opacity: 0.7;
+    }
+
+    #status.error { color: #c0392b; opacity: 1; }
+
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(43,43,43,0.1);
+      transition: transform 0.15s;
+    }
+
+    .card:hover { transform: translateY(-3px); }
+
+    .card a {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card img {
+      width: 100%;
+      height: 160px;
+      object-fit: cover;
+      display: block;
+      background: #eee;
+    }
+
+    .card-caption {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.75rem;
+      color: #2b2b2b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      border-top: 2px solid #b0915d;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Design Studio Image Search</h1>
+    <form id="search-form">
+      <input
+        id="search-input"
+        type="text"
+        placeholder="Search for images…"
+        autocomplete="off"
+        required
+      />
+      <input
+        id="max-results"
+        type="number"
+        min="1"
+        max="20"
+        value="10"
+        title="Max results (1–20)"
+      />
+      <button id="search-btn" type="submit">Search</button>
+    </form>
+  </header>
+
+  <main>
+    <div id="status"></div>
+    <div id="gallery"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById('search-form');
+    const input = document.getElementById('search-input');
+    const maxResultsEl = document.getElementById('max-results');
+    const btn = document.getElementById('search-btn');
+    const status = document.getElementById('status');
+    const gallery = document.getElementById('gallery');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const q = input.value.trim();
+      if (!q) return;
+
+      const maxResults = Math.min(20, Math.max(1, parseInt(maxResultsEl.value, 10) || 10));
+
+      gallery.innerHTML = '';
+      status.className = '';
+      status.textContent = 'Searching…';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}&maxResults=${maxResults}`);
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+          throw new Error(body.error || `HTTP ${res.status}`);
+        }
+
+        const { images = [] } = await res.json();
+
+        if (images.length === 0) {
+          status.textContent = 'No images found. Try a different query.';
+          return;
+        }
+
+        status.textContent = `Found ${images.length} image${images.length !== 1 ? 's' : ''}.`;
+
+        gallery.innerHTML = images.map((img) => `
+          <div class="card">
+            <a href="${escHtml(img.sourceUrl || img.url)}" target="_blank" rel="noopener noreferrer">
+              <img
+                src="${escHtml(img.thumbnailUrl || img.url)}"
+                alt="${escHtml(img.title)}"
+                loading="lazy"
+                onerror="this.style.display='none'"
+              />
+              <div class="card-caption" title="${escHtml(img.title)}">${escHtml(img.title || 'Image')}</div>
+            </a>
+          </div>
+        `).join('');
+      } catch (err) {
+        status.className = 'error';
+        status.textContent = `Error: ${err.message}`;
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function escHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>
