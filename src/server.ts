@@ -70,13 +70,10 @@ export function createApp(): express.Application {
             return;
         }
 
-        const rawMax = parseInt(String(req.query.maxResults ?? '20'), 10);
-        const maxResults = Number.isNaN(rawMax) ? 20 : Math.min(50, Math.max(1, rawMax));
-
-        log.info('Vendor search request', { category, city, state, maxResults });
+        log.info('Vendor search request', { category, city, state });
 
         try {
-            const vendors = await searchVendors(category, city, state, maxResults);
+            const vendors = await searchVendors(category, city, state);
             res.json({ vendors });
         } catch (err) {
             const message = (err as Error).message ?? String(err);

@@ -33,26 +33,24 @@ export async function searchVendors(
     category: string,
     city: string,
     state: string,
-    maxResults = 20,
 ): Promise<VendorResult[]> {
     const token = process.env.APIFY_TOKEN;
     if (!token) throw new Error('APIFY_TOKEN environment variable is required');
 
     const client = new ApifyClient({ token });
 
-    // The Knot URL format: /marketplace/{category}-{city}-{state}
     const citySlug = city.toLowerCase().replace(/\s+/g, '-');
     const stateSlug = state.toLowerCase();
     const startUrl = `https://www.theknot.com/marketplace/${category}-${citySlug}-${stateSlug}`;
 
-    log.info('Vendor search request', { category, city, state, startUrl, maxResults });
+    log.info('Vendor search request', { category, city, state, startUrl });
 
     const run = await client.actor('dionysus_way/the-knot-marketplace-scraper---wedding-vendor-leads').call({
         startUrls: [startUrl],
-        maxItems: maxResults,
+        maxPages: 1,
     });
 
-    const { items } = await client.dataset(run.defaultDatasetId).listItems({ limit: maxResults });
+    const { items } = await client.dataset(run.defaultDatasetId).listItems();
 
     const results: VendorResult[] = [];
     for (const item of items as TheKnotVendorItem[]) {
@@ -70,6 +68,6 @@ export async function searchVendors(
         });
     }
 
-    log.info('Vendor search results', { found: results.length, requested: maxResults });
+    log.info('Vendor search results', { found: results.length });
     return results;
 }
