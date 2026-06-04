@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { log } from 'apify';
 import { searchImages } from './image-search.js';
 import { interpretTopic } from './llm.js';
+import { searchVendors } from './vendor-search.js';
 
 export function createApp(): express.Application {
     const app = express();
@@ -47,6 +48,39 @@ export function createApp(): express.Application {
         } catch (err) {
             const message = (err as Error).message ?? String(err);
             log.error('scrapeImages failed', { error: message });
+            res.status(500).json({ error: message });
+        }
+    });
+
+    app.get('/vendors', (_req: Request, res: Response) => {
+        res.sendFile('vendors.html', { root: publicDir });
+    });
+
+    app.get('/api/vendors', async (req: Request, res: Response) => {
+        const category = typeof req.query.category === 'string' ? req.query.category.trim() : '';
+        const city = typeof req.query.city === 'string' ? req.query.city.trim() : '';
+        const state = typeof req.query.state === 'string' ? req.query.state.trim().toUpperCase() : '';
+
+        if (!category || !city || !state) {
+            res.status(400).json({ error: 'Parameters "category", "city", and "state" are required.' });
+            return;
+        }
+        if (!/^[A-Z]{2}$/.test(state)) {
+            res.status(400).json({ error: 'Parameter "state" must be a two-letter state code.' });
+            return;
+        }
+
+        const rawMax = parseInt(String(req.query.maxResults ?? '20'), 10);
+        const maxResults = Number.isNaN(rawMax) ? 20 : Math.min(50, Math.max(1, rawMax));
+
+        log.info('Vendor search request', { category, city, state, maxResults });
+
+        try {
+            const vendors = await searchVendors(category, city, state, maxResults);
+            res.json({ vendors });
+        } catch (err) {
+            const message = (err as Error).message ?? String(err);
+            log.error('searchVendors failed', { error: message });
             res.status(500).json({ error: message });
         }
     });

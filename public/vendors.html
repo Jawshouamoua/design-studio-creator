@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wedding Vendor Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Montserrat', system-ui, sans-serif;
+      background: #f5f5f5;
+      color: #2b2b2b;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #2b2b2b;
+      color: #fff;
+      padding: 2rem 1rem;
+      text-align: center;
+    }
+
+    header h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 0.4rem; letter-spacing: 0.04em; }
+    header p { font-size: 0.9rem; opacity: 0.7; margin-bottom: 1.25rem; }
+
+    nav { margin-bottom: 1.5rem; }
+    nav a {
+      color: #b0915d;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    nav a:hover { text-decoration: underline; }
+
+    #search-form {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .field label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+
+    .field select,
+    .field input {
+      padding: 0.6rem 0.85rem;
+      font-family: inherit;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 4px;
+      background: #fff;
+      color: #2b2b2b;
+    }
+
+    #category-select { width: 240px; max-width: 100%; }
+    #city-input { width: 180px; max-width: 100%; }
+    #state-input {
+      width: 72px;
+      max-width: 100%;
+      text-transform: uppercase;
+    }
+
+    #search-btn {
+      padding: 0.6rem 1.4rem;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 500;
+      background: #b0915d;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      align-self: flex-end;
+    }
+
+    #search-btn:hover { background: #9a7d50; }
+    #search-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    main { padding: 2rem 1rem; max-width: 1200px; margin: 0 auto; }
+
+    #status {
+      text-align: center;
+      padding: 1rem;
+      font-size: 0.9rem;
+      min-height: 2rem;
+      color: #2b2b2b;
+      opacity: 0.7;
+    }
+
+    #status.error { color: #c0392b; opacity: 1; }
+
+    #results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .vendor-card {
+      background: #fff;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 2px 6px rgba(43,43,43,0.1);
+      transition: transform 0.15s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .vendor-card:hover { transform: translateY(-3px); }
+
+    .vendor-card a {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .vendor-card img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      background: #eee;
+    }
+
+    .vendor-card .no-img {
+      width: 100%;
+      height: 180px;
+      background: #e8e0d5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      color: #b0915d;
+    }
+
+    .vendor-info {
+      padding: 0.85rem 1rem;
+      flex: 1;
+      border-top: 2px solid #b0915d;
+    }
+
+    .vendor-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      line-height: 1.3;
+    }
+
+    .vendor-meta {
+      font-size: 0.75rem;
+      color: #666;
+      margin-bottom: 0.4rem;
+    }
+
+    .vendor-rating {
+      font-size: 0.78rem;
+      color: #b0915d;
+      font-weight: 500;
+    }
+
+    .vendor-desc {
+      font-size: 0.75rem;
+      color: #555;
+      margin-top: 0.4rem;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav><a href="/">&larr; Image Search</a></nav>
+    <h1>Wedding Vendor Search</h1>
+    <form id="search-form" novalidate>
+      <div class="field">
+        <label for="category-select">Category</label>
+        <select id="category-select" required>
+          <option value="">— Select a category —</option>
+          <option value="wedding-photographers">Photographers</option>
+          <option value="wedding-videographers">Videographers</option>
+          <option value="bar-services">Bar Services &amp; Beverages</option>
+          <option value="beauty-services">Beauty</option>
+          <option value="bridal-salons">Bridal Salons</option>
+          <option value="catering">Catering</option>
+          <option value="wedding-dance-lessons">Dance Lessons</option>
+          <option value="wedding-decor">Decor</option>
+          <option value="wedding-djs">DJs</option>
+          <option value="wedding-soloists-ensembles">Ensemblists &amp; Soloists</option>
+          <option value="favors">Favors &amp; Gifts</option>
+          <option value="florists">Florists</option>
+          <option value="invitations">Invitations &amp; Paper Gifts</option>
+          <option value="jewelers">Jewelers</option>
+          <option value="live-wedding-bands">Wedding Bands</option>
+          <option value="wedding-officiants">Officiants &amp; Premarital Counseling</option>
+          <option value="photo-booth-rentals">Photo Booth Rentals</option>
+          <option value="wedding-planners">Wedding Planners</option>
+          <option value="rehearsal-dinners-bridal-showers">Rehearsal Dinners, Bridal Showers &amp; Parties</option>
+          <option value="wedding-rentals">Rentals</option>
+          <option value="transportation-services">Transportation</option>
+          <option value="wedding-travel-agents">Travel Specialists</option>
+          <option value="wedding-cake-bakeries">Wedding Cakes</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="city-input">City</label>
+        <input
+          id="city-input"
+          type="text"
+          placeholder="e.g. Nashville"
+          autocomplete="off"
+          required
+        />
+      </div>
+      <div class="field">
+        <label for="state-input">State</label>
+        <input
+          id="state-input"
+          type="text"
+          placeholder="TN"
+          maxlength="2"
+          autocomplete="off"
+          required
+        />
+      </div>
+      <button id="search-btn" type="submit">Search</button>
+    </form>
+  </header>
+
+  <main>
+    <div id="status"></div>
+    <div id="results"></div>
+  </main>
+
+  <script>
+    const form = document.getElementById('search-form');
+    const categoryEl = document.getElementById('category-select');
+    const cityEl = document.getElementById('city-input');
+    const stateEl = document.getElementById('state-input');
+    const btn = document.getElementById('search-btn');
+    const status = document.getElementById('status');
+    const results = document.getElementById('results');
+
+    stateEl.addEventListener('input', () => {
+      stateEl.value = stateEl.value.toUpperCase().replace(/[^A-Z]/g, '');
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const category = categoryEl.value;
+      const city = cityEl.value.trim();
+      const state = stateEl.value.trim().toUpperCase();
+
+      if (!category) { showError('Please select a category.'); return; }
+      if (!city) { showError('Please enter a city.'); return; }
+      if (!/^[A-Z]{2}$/.test(state)) { showError('Please enter a valid two-letter state code.'); return; }
+
+      results.innerHTML = '';
+      status.className = '';
+      status.textContent = 'Searching for vendors… This may take up to 2 minutes.';
+      btn.disabled = true;
+
+      try {
+        const url = `/api/vendors?category=${encodeURIComponent(category)}&city=${encodeURIComponent(city)}&state=${encodeURIComponent(state)}`;
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+          throw new Error(body.error || `HTTP ${res.status}`);
+        }
+
+        const { vendors = [] } = await res.json();
+
+        if (vendors.length === 0) {
+          status.textContent = 'No vendors found. Try a different category or location.';
+          return;
+        }
+
+        status.textContent = `Found ${vendors.length} vendor${vendors.length !== 1 ? 's' : ''}.`;
+        results.innerHTML = vendors.map((v) => buildCard(v)).join('');
+      } catch (err) {
+        showError(err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function buildCard(v) {
+      const href = escHtml(v.storefront || v.url || '#');
+      const imgHtml = v.thumbnailUrl
+        ? `<img src="${escHtml(v.thumbnailUrl)}" alt="${escHtml(v.name)}" loading="lazy" onerror="this.parentNode.innerHTML='<div class=\\'no-img\\'>&#128144;</div>'" />`
+        : `<div class="no-img">&#128144;</div>`;
+      const ratingHtml = v.rating != null
+        ? `<div class="vendor-rating">&#9733; ${v.rating.toFixed(1)}${v.reviewCount != null ? ` (${v.reviewCount})` : ''}</div>`
+        : '';
+      const descHtml = v.description
+        ? `<p class="vendor-desc">${escHtml(v.description)}</p>`
+        : '';
+      return `
+        <div class="vendor-card">
+          <a href="${href}" target="_blank" rel="noopener noreferrer">
+            ${imgHtml}
+            <div class="vendor-info">
+              <div class="vendor-name">${escHtml(v.name || 'Vendor')}</div>
+              <div class="vendor-meta">${escHtml(v.city || '')}, ${escHtml(v.state || '')}</div>
+              ${ratingHtml}
+              ${descHtml}
+            </div>
+          </a>
+        </div>
+      `;
+    }
+
+    function showError(msg) {
+      status.className = 'error';
+      status.textContent = `Error: ${msg}`;
+    }
+
+    function escHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+  </script>
+</body>
+</html>
